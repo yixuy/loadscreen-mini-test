@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Employee Directory</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -21,10 +28,12 @@
       display: flex;
       align-items: center;
       gap: 16px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
     }
 
-    header svg { flex-shrink: 0; }
+    header svg {
+      flex-shrink: 0;
+    }
 
     header h1 {
       font-size: 1.6rem;
@@ -55,7 +64,7 @@
       background: white;
       border-radius: 12px;
       padding: 20px 24px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -85,7 +94,7 @@
       flex-wrap: wrap;
       align-items: center;
       margin-bottom: 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
     .search-wrap {
@@ -113,7 +122,9 @@
       transition: border-color 0.2s;
     }
 
-    .search-wrap input:focus { border-color: #0f3460; }
+    .search-wrap input:focus {
+      border-color: #0f3460;
+    }
 
     select {
       padding: 10px 14px;
@@ -126,7 +137,9 @@
       transition: border-color 0.2s;
     }
 
-    select:focus { border-color: #0f3460; }
+    select:focus {
+      border-color: #0f3460;
+    }
 
     #resultCount {
       font-size: 0.85rem;
@@ -138,7 +151,7 @@
     .table-wrap {
       background: white;
       border-radius: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
       overflow: hidden;
     }
 
@@ -163,18 +176,33 @@
       transition: background 0.15s;
     }
 
-    thead th:hover { background: #eef0f4; }
+    thead th:hover {
+      background: #eef0f4;
+    }
 
-    thead th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 0.7rem; }
-    thead th.active .sort-icon { opacity: 1; color: #0f3460; }
+    thead th .sort-icon {
+      margin-left: 4px;
+      opacity: 0.4;
+      font-size: 0.7rem;
+    }
+
+    thead th.active .sort-icon {
+      opacity: 1;
+      color: #0f3460;
+    }
 
     tbody tr {
       border-bottom: 1px solid #f0f0f0;
       transition: background 0.12s;
     }
 
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #f7f8fc; }
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #f7f8fc;
+    }
 
     td {
       padding: 14px 16px;
@@ -201,8 +229,14 @@
       gap: 12px;
     }
 
-    .name-cell .name { font-weight: 600; }
-    .name-cell .email { font-size: 0.8rem; color: #888; }
+    .name-cell .name {
+      font-weight: 600;
+    }
+
+    .name-cell .email {
+      font-size: 0.8rem;
+      color: #888;
+    }
 
     .badge {
       display: inline-block;
@@ -218,8 +252,14 @@
       color: #aaa;
     }
 
-    .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
-    .empty-state p { font-size: 1rem; }
+    .empty-state svg {
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+    }
 
     #loadingRow td {
       text-align: center;
@@ -228,122 +268,352 @@
       font-size: 0.9rem;
     }
 
+    .btn-add {
+      padding: 10px 18px;
+      background: #0f3460;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover {
+      background: #16213e;
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .modal h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #666;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 9px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #0f3460;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn-cancel {
+      padding: 10px 18px;
+      background: #f0f2f5;
+      color: #555;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-submit {
+      padding: 10px 20px;
+      background: #0f3460;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-submit:hover {
+      background: #16213e;
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .form-error {
+      color: #c62828;
+      font-size: 0.82rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .required-star {
+      color: #c62828;
+      margin-left: 2px;
+    }
+
+    .field-error {
+      color: #c62828;
+      font-size: 0.78rem;
+      margin-top: 3px;
+      display: none;
+    }
+
+    .form-group input.invalid,
+    .form-group select.invalid {
+      border-color: #c62828;
+    }
+
     @media (max-width: 700px) {
-      .container { padding: 0 12px; }
-      td:nth-child(4), th:nth-child(4),
-      td:nth-child(6), th:nth-child(6) { display: none; }
+      .container {
+        padding: 0 12px;
+      }
+
+      td:nth-child(4),
+      th:nth-child(4),
+      td:nth-child(6),
+      th:nth-child(6) {
+        display: none;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<header>
-  <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-    <circle cx="18" cy="18" r="18" fill="rgba(255,255,255,0.1)"/>
-    <circle cx="18" cy="14" r="5" fill="white" opacity="0.9"/>
-    <path d="M8 28c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
-  </svg>
-  <div>
-    <h1>Employee Directory</h1>
-    <p>Manage and view all company employees</p>
-  </div>
-</header>
-
-<div class="container">
-
-  <div class="stats-row" id="statsRow">
-    <div class="stat-card">
-      <span class="label">Total Employees</span>
-      <span class="value" id="statTotal">—</span>
+  <header>
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="18" fill="rgba(255,255,255,0.1)" />
+      <circle cx="18" cy="14" r="5" fill="white" opacity="0.9" />
+      <path d="M8 28c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="white" stroke-width="2" stroke-linecap="round"
+        opacity="0.9" />
+    </svg>
+    <div>
+      <h1>Employee Directory</h1>
+      <p>Manage and view all company employees</p>
     </div>
-    <div class="stat-card">
-      <span class="label">Departments</span>
-      <span class="value" id="statDepts">—</span>
+  </header>
+
+  <div class="container">
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <span class="label">Total Employees</span>
+        <span class="value" id="statTotal">—</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Departments</span>
+        <span class="value" id="statDepts">—</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Avg. Salary</span>
+        <span class="value" id="statSalary">—</span>
+      </div>
     </div>
-    <div class="stat-card">
-      <span class="label">Avg. Salary</span>
-      <span class="value" id="statSalary">—</span>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="M21 21l-4.35-4.35" />
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search by name, position, or email…" />
+      </div>
+      <select id="deptFilter">
+        <option value="all">All Departments</option>
+      </select>
+      <span id="resultCount"></span>
+      <button class="btn-add" id="openModalBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add Employee
+      </button>
     </div>
+
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal">
+        <h2>Add New Employee</h2>
+        <form id="addEmployeeForm">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label for="f-name">Full Name <span class="required-star">*</span></label>
+              <input id="f-name" name="name" type="text" placeholder="e.g. Jane Doe" />
+              <span class="field-error" id="err-name"></span>
+            </div>
+            <div class="form-group full">
+              <label for="f-phone">Phone Number</label>
+              <input id="f-phone" name="phone" type="tel" placeholder="e.g. +1 604 888 8888" />
+              <span class="field-error" id="err-phone"></span>
+            </div>
+            <div class="form-group full">
+              <label for="f-email">Email <span class="required-star">*</span></label>
+              <input id="f-email" name="email" type="text" placeholder="e.g. jane@example.com" />
+              <span class="field-error" id="err-email"></span>
+            </div>
+            <div class="form-group">
+              <label for="f-dept">Department <span class="required-star">*</span></label>
+              <select id="f-dept" name="department">
+                <option value="">Select…</option>
+              </select>
+              <span class="field-error" id="err-department"></span>
+            </div>
+            <div class="form-group">
+              <label for="f-position">Position <span class="required-star">*</span></label>
+              <input id="f-position" name="position" type="text" placeholder="e.g. Engineer" />
+              <span class="field-error" id="err-position"></span>
+            </div>
+            <div class="form-group">
+              <label for="f-hire-date">Hire Date <span class="required-star">*</span></label>
+              <input id="f-hire-date" name="hire_date" type="date" />
+              <span class="field-error" id="err-hire_date"></span>
+            </div>
+            <div class="form-group">
+              <label for="f-salary">Salary ($) <span class="required-star">*</span></label>
+              <input id="f-salary" name="salary" type="number" min="0" placeholder="e.g. 75000" />
+              <span class="field-error" id="err-salary"></span>
+            </div>
+          </div>
+          <p class="form-error" id="formError"></p>
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" id="closeModalBtn">Cancel</button>
+            <button type="submit" class="btn-submit" id="submitBtn">Add Employee</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="id">ID <span class="sort-icon">▲</span></th>
+            <th data-col="name">Employee <span class="sort-icon">▲</span></th>
+            <th data-col="department">Department <span class="sort-icon">▲</span></th>
+            <th data-col="position">Position <span class="sort-icon">▲</span></th>
+            <th data-col="hire_date">Hire Date <span class="sort-icon">▲</span></th>
+            <th data-col="salary">Salary <span class="sort-icon">▲</span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr id="loadingRow">
+            <td colspan="6">Loading employees…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
   </div>
 
-  <div class="toolbar">
-    <div class="search-wrap">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-      </svg>
-      <input type="text" id="searchInput" placeholder="Search by name, position, or email…" />
-    </div>
-    <select id="deptFilter">
-      <option value="all">All Departments</option>
-    </select>
-    <span id="resultCount"></span>
-  </div>
+  <script>
+    const DEPT_COLORS = {
+      'Engineering': ['#e8f4fd', '#1565c0'],
+      'Marketing': ['#fce4ec', '#c2185b'],
+      'HR': ['#e8f5e9', '#2e7d32'],
+      'Finance': ['#fff8e1', '#f57f17'],
+      'Design': ['#f3e5f5', '#6a1b9a'],
+    };
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th data-col="id">ID <span class="sort-icon">▲</span></th>
-          <th data-col="name">Employee <span class="sort-icon">▲</span></th>
-          <th data-col="department">Department <span class="sort-icon">▲</span></th>
-          <th data-col="position">Position <span class="sort-icon">▲</span></th>
-          <th data-col="hire_date">Hire Date <span class="sort-icon">▲</span></th>
-          <th data-col="salary">Salary <span class="sort-icon">▲</span></th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr id="loadingRow"><td colspan="6">Loading employees…</td></tr>
-      </tbody>
-    </table>
-  </div>
+    const AVATAR_COLORS = ['#e63946', '#2196f3', '#4caf50', '#ff9800', '#9c27b0', '#00bcd4', '#795548', '#607d8b', '#f06292', '#26a69a'];
 
-</div>
+    let sortCol = 'id';
+    let sortOrder = 'asc';
+    let allEmployees = [];
 
-<script>
-  const DEPT_COLORS = {
-    'Engineering': ['#e8f4fd', '#1565c0'],
-    'Marketing':   ['#fce4ec', '#c2185b'],
-    'HR':          ['#e8f5e9', '#2e7d32'],
-    'Finance':     ['#fff8e1', '#f57f17'],
-    'Design':      ['#f3e5f5', '#6a1b9a'],
-  };
+    function avatarColor(name) {
+      let h = 0;
+      for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+      return AVATAR_COLORS[h % AVATAR_COLORS.length];
+    }
 
-  const AVATAR_COLORS = ['#e63946','#2196f3','#4caf50','#ff9800','#9c27b0','#00bcd4','#795548','#607d8b','#f06292','#26a69a'];
+    function initials(name) {
+      return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+    }
 
-  let sortCol = 'id';
-  let sortOrder = 'asc';
-  let allEmployees = [];
+    function deptBadge(dept) {
+      const [bg, text] = DEPT_COLORS[dept] || ['#e0e0e0', '#555'];
+      return `<span class="badge" style="background:${bg};color:${text}">${dept}</span>`;
+    }
 
-  function avatarColor(name) {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return AVATAR_COLORS[h % AVATAR_COLORS.length];
-  }
+    function formatDate(d) {
+      const [y, m, day] = d.split('-');
+      return `${day}/${m}/${y}`;
+    }
 
-  function initials(name) {
-    return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-  }
+    function formatSalary(n) {
+      return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
+    }
 
-  function deptBadge(dept) {
-    const [bg, text] = DEPT_COLORS[dept] || ['#e0e0e0', '#555'];
-    return `<span class="badge" style="background:${bg};color:${text}">${dept}</span>`;
-  }
+    function renderTable(employees) {
+      const tbody = document.getElementById('tableBody');
+      document.getElementById('resultCount').textContent = `${employees.length} result${employees.length !== 1 ? 's' : ''}`;
 
-  function formatDate(d) {
-    const [y, m, day] = d.split('-');
-    return `${day}/${m}/${y}`;
-  }
-
-  function formatSalary(n) {
-    return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
-  }
-
-  function renderTable(employees) {
-    const tbody = document.getElementById('tableBody');
-    document.getElementById('resultCount').textContent = `${employees.length} result${employees.length !== 1 ? 's' : ''}`;
-
-    if (employees.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6">
+      if (employees.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6">
         <div class="empty-state">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
@@ -351,10 +621,10 @@
           <p>No employees match your search.</p>
         </div>
       </td></tr>`;
-      return;
-    }
+        return;
+      }
 
-    tbody.innerHTML = employees.map(emp => `
+      tbody.innerHTML = employees.map(emp => `
       <tr>
         <td style="color:#aaa;font-size:0.82rem">#${emp.id}</td>
         <td>
@@ -372,74 +642,216 @@
         <td style="font-weight:600">${formatSalary(emp.salary)}</td>
       </tr>
     `).join('');
-  }
-
-  function updateSortHeaders() {
-    document.querySelectorAll('thead th').forEach(th => {
-      const col = th.dataset.col;
-      th.classList.toggle('active', col === sortCol);
-      const icon = th.querySelector('.sort-icon');
-      if (col === sortCol) {
-        icon.textContent = sortOrder === 'asc' ? '▲' : '▼';
-      } else {
-        icon.textContent = '▲';
-      }
-    });
-  }
-
-  async function loadDepartments() {
-    const res = await fetch('/api/departments');
-    const depts = await res.json();
-    const sel = document.getElementById('deptFilter');
-    depts.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d; opt.textContent = d;
-      sel.appendChild(opt);
-    });
-    document.getElementById('statDepts').textContent = depts.length;
-  }
-
-  async function loadEmployees() {
-    const search = document.getElementById('searchInput').value;
-    const department = document.getElementById('deptFilter').value;
-    const params = new URLSearchParams({ search, department, sort: sortCol, order: sortOrder });
-    const res = await fetch(`/api/employees?${params}`);
-    allEmployees = await res.json();
-    renderTable(allEmployees);
-
-    if (department === 'all' && !search) {
-      document.getElementById('statTotal').textContent = allEmployees.length;
-      const avg = allEmployees.reduce((s, e) => s + e.salary, 0) / (allEmployees.length || 1);
-      document.getElementById('statSalary').textContent = '$' + Math.round(avg / 1000) + 'k';
     }
-  }
 
-  document.querySelectorAll('thead th[data-col]').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      if (sortCol === col) {
-        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-      } else {
-        sortCol = col;
-        sortOrder = 'asc';
+    function updateSortHeaders() {
+      document.querySelectorAll('thead th').forEach(th => {
+        const col = th.dataset.col;
+        th.classList.toggle('active', col === sortCol);
+        const icon = th.querySelector('.sort-icon');
+        if (col === sortCol) {
+          icon.textContent = sortOrder === 'asc' ? '▲' : '▼';
+        } else {
+          icon.textContent = '▲';
+        }
+      });
+    }
+
+    async function loadDepartments() {
+      const res = await fetch('/api/departments');
+      const depts = await res.json();
+      const sel = document.getElementById('deptFilter');
+      depts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d; opt.textContent = d;
+        sel.appendChild(opt);
+      });
+      document.getElementById('statDepts').textContent = depts.length;
+    }
+
+    async function loadEmployees() {
+      const search = document.getElementById('searchInput').value;
+      const department = document.getElementById('deptFilter').value;
+      const params = new URLSearchParams({ search, department, sort: sortCol, order: sortOrder });
+      const res = await fetch(`/api/employees?${params}`);
+      allEmployees = await res.json();
+      renderTable(allEmployees);
+
+      if (department === 'all' && !search) {
+        document.getElementById('statTotal').textContent = allEmployees.length;
+        const avg = allEmployees.reduce((s, e) => s + e.salary, 0) / (allEmployees.length || 1);
+        document.getElementById('statSalary').textContent = '$' + Math.round(avg / 1000) + 'k';
       }
-      updateSortHeaders();
-      loadEmployees();
+    }
+
+    document.querySelectorAll('thead th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) {
+          sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortCol = col;
+          sortOrder = 'asc';
+        }
+        updateSortHeaders();
+        loadEmployees();
+      });
     });
-  });
 
-  let debounceTimer;
-  document.getElementById('searchInput').addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(loadEmployees, 250);
-  });
+    let debounceTimer;
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadEmployees, 250);
+    });
 
-  document.getElementById('deptFilter').addEventListener('change', loadEmployees);
+    document.getElementById('deptFilter').addEventListener('change', loadEmployees);
 
-  updateSortHeaders();
-  loadDepartments();
-  loadEmployees();
-</script>
+    updateSortHeaders();
+    loadDepartments();
+    loadEmployees();
+
+    // ---- Add Employee Modal ----
+    const modal = document.getElementById('modalBackdrop');
+    const form = document.getElementById('addEmployeeForm');
+    const formError = document.getElementById('formError');
+    const submitBtn = document.getElementById('submitBtn');
+
+    document.getElementById('openModalBtn').addEventListener('click', () => {
+      // Populate department dropdown from existing options
+      const fDept = document.getElementById('f-dept');
+      fDept.innerHTML = '<option value="">Select…</option>';
+      document.querySelectorAll('#deptFilter option').forEach(opt => {
+        if (opt.value && opt.value !== 'all') {
+          const o = document.createElement('option');
+          o.value = opt.value; o.textContent = opt.textContent;
+          fDept.appendChild(o);
+        }
+      });
+      form.reset();
+      formError.style.display = 'none';
+      form.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
+      form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+      modal.classList.add('open');
+    });
+
+    function closeModal() { modal.classList.remove('open'); }
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+    // Clear all field errors and return false if any field is invalid
+    function validateForm(body) {
+      const fields = ['name', 'phone', 'email', 'department', 'position', 'hire_date', 'salary'];
+      fields.forEach(f => {
+        const el = document.getElementById('f-' + f.replace('_', '-')) || document.getElementById('f-dept');
+        const err = document.getElementById('err-' + f);
+        if (el) el.classList.remove('invalid');
+        if (err) { err.textContent = ''; err.style.display = 'none'; }
+      });
+
+      const errors = {};
+
+      // Name: required, 2–80 chars
+      if (!body.name || body.name.trim().length < 2) {
+        errors.name = 'Name must be at least 2 characters.';
+      } else if (!/^[\p{L}\s\-'.]+$/u.test(body.name.trim())) {
+        errors.name = 'Name can only contain letters, spaces, hyphens, or apostrophes.';
+      } else if (body.name.trim().length > 80) {
+        errors.name = 'Name must be 80 characters or fewer.';
+      }
+
+      if (body.phone && body.phone.trim()) {
+        if (!/^[+\d][\d\s\-().]{5,18}$/.test(body.phone.trim()) || body.phone.replace(/\D/g, '').length < 7) {
+          errors.phone = 'Enter a valid phone number (e.g. +1 604 888 8888).';
+        }
+      }
+
+      // Email: required, valid format
+      if (!body.email || !body.email.trim()) {
+        errors.email = 'Email is required.';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) {
+        errors.email = 'Enter a valid email address.';
+      }
+
+      // Department: required selection
+      if (!body.department) {
+        errors.department = 'Please select a department.';
+      }
+
+      // Position: required, 2–80 chars
+      if (!body.position || body.position.trim().length < 2) {
+        errors.position = 'Position must be at least 2 characters.';
+      } else if (body.position.trim().length > 80) {
+        errors.position = 'Position must be 80 characters or fewer.';
+      }
+
+      // Hire date: required, not in the future
+      if (!body.hire_date) {
+        errors.hire_date = 'Hire date is required.';
+      } else {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const chosen = new Date(body.hire_date);
+        if (isNaN(chosen)) {
+          errors.hire_date = 'Enter a valid date.';
+        } else if (chosen > today) {
+          errors.hire_date = 'Hire date cannot be in the future.';
+        }
+      }
+
+      // Salary: required, positive integer
+      const sal = Number(body.salary);
+      if (body.salary === '' || body.salary === undefined) {
+        errors.salary = 'Salary is required.';
+      } else if (isNaN(sal) || sal <= 0) {
+        errors.salary = 'Salary must be a positive number.';
+      } else if (!Number.isInteger(sal)) {
+        errors.salary = 'Salary must be a whole number.';
+      }
+
+      const fieldIds = { name: 'f-name', phone: 'f-phone', email: 'f-email', department: 'f-dept', position: 'f-position', hire_date: 'f-hire-date', salary: 'f-salary' };
+      Object.entries(errors).forEach(([field, msg]) => {
+        const input = document.getElementById(fieldIds[field]);
+        const errEl = document.getElementById('err-' + field);
+        if (input) input.classList.add('invalid');
+        if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+      });
+
+      return Object.keys(errors).length === 0;
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      formError.style.display = 'none';
+
+      const body = Object.fromEntries(new FormData(form));
+      if (!validateForm(body)) return;
+
+      submitBtn.disabled = true;
+      body.salary = Number(body.salary);
+
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to add employee');
+        }
+        closeModal();
+        loadEmployees();
+        loadDepartments().then(() => {
+          document.getElementById('deptFilter').value = 'all';
+        });
+      } catch (err) {
+        formError.textContent = err.message;
+        formError.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
 
 </body>
+
 </html>
