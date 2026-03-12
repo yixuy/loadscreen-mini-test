@@ -63,10 +63,10 @@ app.post("/api/employees", (req, res) => {
     return res.status(400).json({ error: "Email already exists" });
   }
 
-  const insert_query = db.prepare(
+  const insertQuery = db.prepare(
     "INSERT INTO employees (name, phone, department, position, hire_date, salary, email) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
-  const info = insert_query.run(
+  const info = insertQuery.run(
     name,
     phone,
     department,
@@ -86,6 +86,98 @@ app.post("/api/employees", (req, res) => {
     salary,
     email,
   });
+});
+
+// **Task 2 — Edit Employee**
+// Add an "Edit" button on each row that opens a form pre-filled with the employee's current data. Implement a `PUT /api/employees/:id` endpoint to save changes.
+app.get("/api/employees/:id", (req, res) => {
+  const id = req.params.id;
+  const employee = db.prepare("SELECT * FROM employees WHERE id = ?").get(id);
+
+  if (!employee) {
+    return res.status(404).json({ error: "Employee not found" });
+  }
+
+  res.json(employee);
+});
+
+app.put("/api/employees/:id", (req, res) => {
+  const id = req.params.id;
+  if (!id) {
+    return res.status(400).json({ error: "Employee ID is required" });
+  }
+  const employee = db.prepare("SELECT * FROM employees WHERE id = ?").get(id);
+  if (!employee) {
+    return res.status(404).json({ error: "Employee not found" });
+  }
+  const { name, phone, department, position, hire_date, salary, email } =
+    req.body;
+
+  if (!name || !department || !position || !hire_date || !salary || !email) {
+    return res.status(400).json({
+      error:
+        "Name, department, position, hire date, salary, and email are required",
+    });
+  }
+
+  try {
+    const updateQuery = db.prepare(
+      "UPDATE employees SET name = ?, phone = ?, department = ?, position = ?, hire_date = ?, salary = ?, email = ? WHERE id = ?",
+    );
+    const info = updateQuery.run(
+      name,
+      phone || null,
+      department,
+      position,
+      hire_date,
+      salary,
+      email,
+      id,
+    );
+
+    if (info.changes === 0) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    res.json({
+      id,
+      name,
+      phone: phone || null,
+      department,
+      position,
+      hire_date,
+      salary,
+      email,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// **Task 3 — Delete Employee**
+// Add a "Delete" button on each row with a confirmation prompt. Implement a `DELETE /api/employees/:id` endpoint to remove the record.app.delete("/api/employees/:id", (req, res) => {
+app.delete("/api/employees/:id", (req, res) => {
+  const id = req.params.id;
+  if (!id) {
+    return res.status(400).json({ error: "Employee ID is required" });
+  }
+  const employee = db.prepare("SELECT * FROM employees WHERE id = ?").get(id);
+  if (!employee) {
+    return res.status(404).json({ error: "Employee not found" });
+  }
+
+  try {
+    const deleteQuery = db.prepare("DELETE FROM employees WHERE id = ?");
+    const info = deleteQuery.run(id);
+
+    if (info.changes === 0) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    res.json({ message: "Employee deleted successfully", id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get("/api/departments", (req, res) => {

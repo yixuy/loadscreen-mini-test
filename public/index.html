@@ -21,6 +21,44 @@
       min-height: 100vh;
     }
 
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #1a1a2e;
+      color: white;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-icon {
+      width: 20px;
+      height: 20px;
+      background: #4caf50;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.75rem;
+    }
+
     header {
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       color: white;
@@ -444,6 +482,11 @@
 
 <body>
 
+  <div class="toast" id="toast">
+    <div class="toast-icon">✓</div>
+    <span id="toastMsg"></span>
+  </div>
+
   <header>
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
       <circle cx="18" cy="18" r="18" fill="rgba(255,255,255,0.1)" />
@@ -557,11 +600,13 @@
             <th data-col="position">Position <span class="sort-icon">▲</span></th>
             <th data-col="hire_date">Hire Date <span class="sort-icon">▲</span></th>
             <th data-col="salary">Salary <span class="sort-icon">▲</span></th>
+            <th style="text-align:center;width:80px;">Edit</th>
+            <th style="text-align:center;width:80px;">Delete</th>
           </tr>
         </thead>
         <tbody id="tableBody">
           <tr id="loadingRow">
-            <td colspan="6">Loading employees…</td>
+            <td colspan="8">Loading employees…</td>
           </tr>
         </tbody>
       </table>
@@ -613,7 +658,7 @@
       document.getElementById('resultCount').textContent = `${employees.length} result${employees.length !== 1 ? 's' : ''}`;
 
       if (employees.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6">
+        tbody.innerHTML = `<tr><td colspan="8">
         <div class="empty-state">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
@@ -623,6 +668,7 @@
       </td></tr>`;
         return;
       }
+
 
       tbody.innerHTML = employees.map(emp => `
       <tr>
@@ -640,19 +686,26 @@
         <td>${emp.position}</td>
         <td>${formatDate(emp.hire_date)}</td>
         <td style="font-weight:600">${formatSalary(emp.salary)}</td>
+        <td style="text-align:center;">
+          <button onclick="openEditEmployee(${emp.id})" style="padding:5px 14px;background:#e8f0fe;color:#1565c0;border:none;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;">Edit</button>
+        </td>
+        <td style="text-align:center;">
+          <button onclick="deleteEmployee(${emp.id})" style="padding:5px 14px;background:#fdecea;color:#c62828;border:none;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;">Delete</button>
+        </td>
       </tr>
     `).join('');
     }
-
     function updateSortHeaders() {
       document.querySelectorAll('thead th').forEach(th => {
         const col = th.dataset.col;
         th.classList.toggle('active', col === sortCol);
         const icon = th.querySelector('.sort-icon');
-        if (col === sortCol) {
-          icon.textContent = sortOrder === 'asc' ? '▲' : '▼';
-        } else {
-          icon.textContent = '▲';
+        if (icon) {
+          if (col === sortCol) {
+            icon.textContent = sortOrder === 'asc' ? '▲' : '▼';
+          } else {
+            icon.textContent = '▲';
+          }
         }
       });
     }
@@ -661,6 +714,10 @@
       const res = await fetch('/api/departments');
       const depts = await res.json();
       const sel = document.getElementById('deptFilter');
+
+      // Keep only the default "All Departments" option before repopulating.
+      while (sel.options.length > 1) sel.remove(1);
+
       depts.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d; opt.textContent = d;
@@ -710,6 +767,57 @@
     loadDepartments();
     loadEmployees();
 
+    let editingEmployeeId = null;
+
+    async function openEditEmployee(id) {
+      const res = await fetch(`/api/employees/${id}`);
+      const emp = await res.json();
+      const fDept = document.getElementById('f-dept');
+      fDept.innerHTML = '<option value="">Select…</option>';
+      document.querySelectorAll('#deptFilter option').forEach(opt => {
+        if (opt.value && opt.value !== 'all') {
+          const o = document.createElement('option');
+          o.value = opt.value; o.textContent = opt.textContent;
+          fDept.appendChild(o);
+        }
+      });
+      editingEmployeeId = id;
+      document.getElementById('f-name').value = emp.name || '';
+      document.getElementById('f-phone').value = emp.phone || '';
+      document.getElementById('f-email').value = emp.email || '';
+      document.getElementById('f-dept').value = emp.department || '';
+      document.getElementById('f-position').value = emp.position || '';
+      document.getElementById('f-hire-date').value = emp.hire_date || '';
+      document.getElementById('f-salary').value = emp.salary || '';
+
+      document.querySelector('.modal h2').textContent = 'Edit Employee';
+      document.getElementById('submitBtn').textContent = 'Save Changes';
+      document.getElementById('formError').style.display = 'none';
+      document.getElementById('addEmployeeForm').querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
+      document.getElementById('addEmployeeForm').querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+      document.getElementById('modalBackdrop').classList.add('open');
+    }
+    window.openEditEmployee = openEditEmployee;
+    // ---- Delete Employee Modal ----
+    async function deleteEmployee(id) {
+      const employee = allEmployees.find(e => Number(e.id) === Number(id));
+      const name = employee?.name || '';
+      if (!confirm(`Are you sure you want to delete user called "${name}" with (ID: ${id})? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to delete employee');
+        }
+        loadEmployees();
+        loadDepartments();
+        showToast(`Deleted "${name}" (ID: ${id}) successfully.`);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+    window.deleteEmployee = deleteEmployee;
+
     // ---- Add Employee Modal ----
     const modal = document.getElementById('modalBackdrop');
     const form = document.getElementById('addEmployeeForm');
@@ -727,6 +835,9 @@
           fDept.appendChild(o);
         }
       });
+      editingEmployeeId = null;
+      document.querySelector('.modal h2').textContent = 'Add New Employee';
+      submitBtn.textContent = 'Add Employee';
       form.reset();
       formError.style.display = 'none';
       form.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
@@ -829,20 +940,24 @@
       body.salary = Number(body.salary);
 
       try {
-        const res = await fetch('/api/employees', {
-          method: 'POST',
+        const method = editingEmployeeId ? 'PUT' : 'POST';
+        const url = editingEmployeeId ? `/api/employees/${editingEmployeeId}` : '/api/employees';
+        const res = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to add employee');
+          throw new Error(err.error || (editingEmployeeId ? 'Failed to update employee' : 'Failed to add employee'));
         }
         closeModal();
+        const wasEditing = editingEmployeeId;
         loadEmployees();
         loadDepartments().then(() => {
-          document.getElementById('deptFilter').value = 'all';
+          if (!wasEditing) document.getElementById('deptFilter').value = 'all';
         });
+        showToast(wasEditing ? 'Employee updated successfully!' : 'Employee added successfully!');
       } catch (err) {
         formError.textContent = err.message;
         formError.style.display = 'block';
@@ -850,6 +965,15 @@
         submitBtn.disabled = false;
       }
     });
+
+    let toastTimer;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
   </script>
 
 </body>
