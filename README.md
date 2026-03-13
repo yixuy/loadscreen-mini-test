@@ -18,3 +18,9 @@ Please complete the following tasks. Each task builds on the existing codebase (
 
 - [ ] **Task 5 — Department Salary Pie Chart**
   Add a `GET /api/salary-by-department` endpoint that returns the total salary grouped by department. On the frontend, render a pie chart using only pure HTML5 Canvas (no external chart libraries) that visualises each department's share of the total salary. Display the chart on the employee directory page.
+
+<!-- Questions: -->
+<!-- Department dropdown bug -->
+<!-- If there is no employee, how could we handle distinct department -->
+
+<!-- Switch the All department search when there is a edit page -->

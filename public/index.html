@@ -465,6 +465,37 @@
       border-color: #c62828;
     }
 
+    .pagination {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .pagination button {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #d7dbe3;
+      background: #fff;
+      color: #1a1a2e;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-info {
+      min-width: 104px;
+      text-align: center;
+      color: #666;
+      font-size: 0.82rem;
+    }
+
     @media (max-width: 700px) {
       .container {
         padding: 0 12px;
@@ -612,6 +643,12 @@
       </table>
     </div>
 
+    <div class="pagination" id="paginationControls">
+      <button id="prevPageBtn" type="button">Prev</button>
+      <span class="pagination-info" id="pageInfo">Page 0 of 0</span>
+      <button id="nextPageBtn" type="button">Next</button>
+    </div>
+
   </div>
 
   <script>
@@ -628,6 +665,10 @@
     let sortCol = 'id';
     let sortOrder = 'asc';
     let allEmployees = [];
+    let currentPage = 1;
+    const rowsPerPage = 5;
+    let totalPages = 1;
+    let totalRows = 0;
 
     function avatarColor(name) {
       let h = 0;
@@ -655,7 +696,7 @@
 
     function renderTable(employees) {
       const tbody = document.getElementById('tableBody');
-      document.getElementById('resultCount').textContent = `${employees.length} result${employees.length !== 1 ? 's' : ''}`;
+      document.getElementById('resultCount').textContent = `${totalRows} result${totalRows !== 1 ? 's' : ''}`;
 
       if (employees.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8">
@@ -666,6 +707,7 @@
           <p>No employees match your search.</p>
         </div>
       </td></tr>`;
+        updatePaginationControls();
         return;
       }
 
@@ -694,6 +736,18 @@
         </td>
       </tr>
     `).join('');
+    }
+
+    function updatePaginationControls() {
+      const controls = document.getElementById('paginationControls');
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+      const pageInfo = document.getElementById('pageInfo');
+
+      controls.style.display = totalRows > rowsPerPage ? 'flex' : 'none';
+      pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = currentPage >= totalPages;
     }
     function updateSortHeaders() {
       document.querySelectorAll('thead th').forEach(th => {
@@ -729,13 +783,30 @@
     async function loadEmployees() {
       const search = document.getElementById('searchInput').value;
       const department = document.getElementById('deptFilter').value;
-      const params = new URLSearchParams({ search, department, sort: sortCol, order: sortOrder });
+      const params = new URLSearchParams({
+        search,
+        department,
+        sort: sortCol,
+        order: sortOrder,
+        page: String(currentPage),
+        limit: String(rowsPerPage),
+      });
       const res = await fetch(`/api/employees?${params}`);
       allEmployees = await res.json();
+
+      totalRows = Number(res.headers.get('X-Total-Count') || allEmployees.length);
+      totalPages = Number(res.headers.get('X-Total-Pages') || 1);
+
+      if (currentPage > totalPages) {
+        currentPage = totalPages;
+        return loadEmployees();
+      }
+
       renderTable(allEmployees);
+      updatePaginationControls();
 
       if (department === 'all' && !search) {
-        document.getElementById('statTotal').textContent = allEmployees.length;
+        document.getElementById('statTotal').textContent = totalRows;
         const avg = allEmployees.reduce((s, e) => s + e.salary, 0) / (allEmployees.length || 1);
         document.getElementById('statSalary').textContent = '$' + Math.round(avg / 1000) + 'k';
       }
@@ -750,6 +821,7 @@
           sortCol = col;
           sortOrder = 'asc';
         }
+        currentPage = 1;
         updateSortHeaders();
         loadEmployees();
       });
@@ -758,16 +830,36 @@
     let debounceTimer;
     document.getElementById('searchInput').addEventListener('input', () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(loadEmployees, 250);
+      debounceTimer = setTimeout(() => {
+        currentPage = 1;
+        loadEmployees();
+      }, 250);
     });
 
-    document.getElementById('deptFilter').addEventListener('change', loadEmployees);
+    document.getElementById('deptFilter').addEventListener('change', () => {
+      currentPage = 1;
+      loadEmployees();
+    });
+
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        loadEmployees();
+      }
+    });
+
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage += 1;
+        loadEmployees();
+      }
+    });
 
     updateSortHeaders();
     loadDepartments();
     loadEmployees();
 
-    let editingEmployeeId = null;
+    let editingEmployeeMethod = null;
 
     async function openEditEmployee(id) {
       const res = await fetch(`/api/employees/${id}`);
@@ -781,7 +873,7 @@
           fDept.appendChild(o);
         }
       });
-      editingEmployeeId = id;
+      editingEmployeeMethod = id;
       document.getElementById('f-name').value = emp.name || '';
       document.getElementById('f-phone').value = emp.phone || '';
       document.getElementById('f-email').value = emp.email || '';
@@ -835,7 +927,7 @@
           fDept.appendChild(o);
         }
       });
-      editingEmployeeId = null;
+      editingEmployeeMethod = null;
       document.querySelector('.modal h2').textContent = 'Add New Employee';
       submitBtn.textContent = 'Add Employee';
       form.reset();
@@ -940,8 +1032,8 @@
       body.salary = Number(body.salary);
 
       try {
-        const method = editingEmployeeId ? 'PUT' : 'POST';
-        const url = editingEmployeeId ? `/api/employees/${editingEmployeeId}` : '/api/employees';
+        const method = editingEmployeeMethod ? 'PUT' : 'POST';
+        const url = editingEmployeeMethod ? `/api/employees/${editingEmployeeMethod}` : '/api/employees';
         const res = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
@@ -949,14 +1041,16 @@
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || (editingEmployeeId ? 'Failed to update employee' : 'Failed to add employee'));
+          throw new Error(err.error || (editingEmployeeMethod ? 'Failed to update employee' : 'Failed to add employee'));
         }
         closeModal();
-        const wasEditing = editingEmployeeId;
-        loadEmployees();
-        loadDepartments().then(() => {
-          if (!wasEditing) document.getElementById('deptFilter').value = 'all';
-        });
+        const wasEditing = Boolean(editingEmployeeMethod);
+        await loadDepartments();
+        if (wasEditing) {
+          document.getElementById('deptFilter').value = 'all';
+          currentPage = 1;
+        }
+        await loadEmployees();
         showToast(wasEditing ? 'Employee updated successfully!' : 'Employee added successfully!');
       } catch (err) {
         formError.textContent = err.message;
