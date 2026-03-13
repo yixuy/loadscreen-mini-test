@@ -19,9 +19,8 @@ Please complete the following tasks. Each task builds on the existing codebase (
 - [x] **Task 5 — Department Salary Pie Chart**
   Add a `GET /api/salary-by-department` endpoint that returns the total salary grouped by department. On the frontend, render a pie chart using only pure HTML5 Canvas (no external chart libraries) that visualises each department's share of the total salary. Display the chart on the employee directory page.
 
-- **How to run the repo:**
-Use `npx tsx two_sum.ts` to run the question
-Use `npm start` to run the project
-
+## How to run the repo:
+- Use `npx tsx two_sum.ts` to run the question
+- Use `npm start` to run the project
 - [ ] **Question from Candidate:**
 Department dropdown issue: If there are no employees in the system, how should the department dropdown be populated? My understanding is that we could seed the Department table with initial data. Would that be the expected approach?
