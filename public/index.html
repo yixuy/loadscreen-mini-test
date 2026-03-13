@@ -191,6 +191,7 @@
       border-radius: 12px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
       overflow: hidden;
+      min-height: 150px;
     }
 
     table {
@@ -804,10 +805,24 @@
 
       const total = data.reduce((sum, item) => sum + Number(item.salary || 0), 0);
       if (!total) {
-        ctx.fillStyle = '#999';
-        ctx.font = '14px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+        const iconX = cssSize / 2;
+        const iconY = cssSize / 2 - 18;
+
+        // Draw a subtle magnifier icon to mirror the table empty-state pattern.
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(iconX, iconY, 16, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(iconX + 12, iconY + 12);
+        ctx.lineTo(iconX + 20, iconY + 20);
+        ctx.stroke();
+
+        ctx.fillStyle = '#aaa';
+        ctx.font = '16px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('No salary data', cssSize / 2, cssSize / 2);
+        ctx.fillText('No salary data', cssSize / 2, cssSize / 2 + 34);
         legend.innerHTML = '';
         return;
       }
@@ -883,7 +898,7 @@
       }
 
 
-      tbody.innerHTML = employees.map(emp => `
+      const employeeRows = employees.map(emp => `
       <tr>
         <td style="color:#aaa;font-size:0.82rem">#${emp.id}</td>
         <td>
@@ -907,6 +922,21 @@
         </td>
       </tr>
     `).join('');
+
+      const blankRow = `
+      <tr aria-hidden="true">
+        <td style="height:65px;">&nbsp;</td>
+        <td style="height:65px;">&nbsp;</td>
+        <td style="height:65px;">&nbsp;</td>
+        <td style="height:65px;">&nbsp;</td>
+        <td style="height:65px;">&nbsp;</td>
+        <td style="height:65px;">&nbsp;</td>
+        <td style="height:65px;">&nbsp;</td>
+        <td style="height:65px;">&nbsp;</td>
+      </tr>
+    `;
+      const blankCount = Math.max(0, rowsPerPage - employees.length);
+      tbody.innerHTML = employeeRows + blankRow.repeat(blankCount);
     }
 
     function updatePaginationControls() {
@@ -914,8 +944,12 @@
       const prevBtn = document.getElementById('prevPageBtn');
       const nextBtn = document.getElementById('nextPageBtn');
       const pageInfo = document.getElementById('pageInfo');
+      const searchValue = (document.getElementById('searchInput').value || '').trim();
+      const selectedDept = document.getElementById('deptFilter').value;
+      const hasActiveFilter = Boolean(searchValue) || selectedDept !== 'all';
 
-      controls.style.display = totalRows > rowsPerPage ? 'flex' : 'none';
+      const shouldShowPagination = totalRows > rowsPerPage || (hasActiveFilter && totalRows > 0);
+      controls.style.display = shouldShowPagination ? 'flex' : 'none';
       pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
       prevBtn.disabled = currentPage <= 1;
       nextBtn.disabled = currentPage >= totalPages;
