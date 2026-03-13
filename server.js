@@ -201,6 +201,20 @@ app.delete("/api/employees/:id", (req, res) => {
   }
 });
 
+// Task 5: Add a `GET /api/salary-by-department` endpoint that returns the total salary grouped by department. On the frontend, render a pie chart using only pure HTML5 Canvas (no external chart libraries) that visualises each department's share of the total salary. Display the chart on the employee directory page.
+app.get("/api/salary-by-department", (req, res) => {
+  const salaryData = db
+    .prepare(
+      "SELECT department, SUM(salary) AS salary FROM employees GROUP BY department",
+    )
+    .all()
+    .map((row) => ({
+      department: row.department,
+      salary: Number(row.salary),
+    }));
+  res.json(salaryData);
+});
+
 app.get("/api/departments", (req, res) => {
   const departments = db
     .prepare("SELECT DISTINCT department FROM employees ORDER BY department")

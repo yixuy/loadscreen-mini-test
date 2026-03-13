@@ -286,7 +286,7 @@
 
     .empty-state {
       text-align: center;
-      padding: 60px 20px;
+      padding: 130px 20px;
       color: #aaa;
     }
 
@@ -296,6 +296,7 @@
     }
 
     .empty-state p {
+      height: 80;
       font-size: 1rem;
     }
 
@@ -470,7 +471,8 @@
       justify-content: flex-end;
       align-items: center;
       gap: 10px;
-      margin-top: 12px;
+      margin-top: 18px;
+      padding: 0 16px 16px;
     }
 
     .pagination button {
@@ -496,9 +498,85 @@
       font-size: 0.82rem;
     }
 
+    .chart-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      margin-top: 20px;
+    }
+
+    .chart-title {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      font-weight: 800;
+      margin-bottom: 14px;
+      margin-top: 14px;
+    }
+
+    .chart-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    #salaryPieChart {
+      width: 240px;
+      height: 240px;
+      max-width: 100%;
+    }
+
+    .chart-legend {
+      display: grid;
+      gap: 8px;
+
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.88rem;
+      color: #1a1a2e;
+      font-weight: 600;
+      padding: 8px 0;
+      border-bottom: 1px solid #eceff3;
+    }
+
+    .legend-item:last-child {
+      border-bottom: none;
+    }
+
+    .legend-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
     @media (max-width: 700px) {
       .container {
         padding: 0 12px;
+      }
+
+      .chart-layout {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .chart-legend {
+        width: 100%;
       }
 
       td:nth-child(4),
@@ -548,6 +626,8 @@
       </div>
     </div>
 
+
+
     <div class="toolbar">
       <div class="search-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -568,6 +648,8 @@
         Add Employee
       </button>
     </div>
+
+
 
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal">
@@ -641,14 +723,20 @@
           </tr>
         </tbody>
       </table>
+      <div class="pagination" id="paginationControls">
+        <button id="prevPageBtn" type="button">Prev</button>
+        <span class="pagination-info" id="pageInfo">Page 0 of 0</span>
+        <button id="nextPageBtn" type="button">Next</button>
+      </div>
     </div>
 
-    <div class="pagination" id="paginationControls">
-      <button id="prevPageBtn" type="button">Prev</button>
-      <span class="pagination-info" id="pageInfo">Page 0 of 0</span>
-      <button id="nextPageBtn" type="button">Next</button>
+    <div class="chart-card">
+      <div class="chart-title">Salary Share by Department</div>
+      <div class="chart-layout">
+        <canvas id="salaryPieChart" width="240" height="240" aria-label="Department salary share pie chart"></canvas>
+        <div class="chart-legend" id="salaryChartLegend"></div>
+      </div>
     </div>
-
   </div>
 
   <script>
@@ -669,6 +757,12 @@
     const rowsPerPage = 5;
     let totalPages = 1;
     let totalRows = 0;
+
+    function getDepartmentColor(department, index = 0) {
+      // Match chart colors to department badges.
+      return (DEPT_COLORS[department] && DEPT_COLORS[department][1])
+        || ['#0f3460', '#2e7d32', '#f57f17', '#c2185b', '#6a1b9a', '#00897b', '#5d4037', '#1976d2'][index % 8];
+    }
 
     function avatarColor(name) {
       let h = 0;
@@ -694,6 +788,83 @@
       return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
     }
 
+    function drawPieChart(data) {
+      const canvas = document.getElementById('salaryPieChart');
+      const legend = document.getElementById('salaryChartLegend');
+      const ctx = canvas.getContext('2d');
+      const cssSize = 240;
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = cssSize * dpr;
+      canvas.height = cssSize * dpr;
+      canvas.style.width = `${cssSize}px`;
+      canvas.style.height = `${cssSize}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssSize, cssSize);
+
+      const total = data.reduce((sum, item) => sum + Number(item.salary || 0), 0);
+      if (!total) {
+        ctx.fillStyle = '#999';
+        ctx.font = '14px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No salary data', cssSize / 2, cssSize / 2);
+        legend.innerHTML = '';
+        return;
+      }
+
+      const centerX = cssSize / 2;
+      const centerY = cssSize / 2;
+      const radius = 92;
+      let startAngle = -Math.PI / 2;
+
+      data.forEach((item, index) => {
+        const value = Number(item.salary || 0);
+        const sliceAngle = (value / total) * Math.PI * 2;
+        const color = getDepartmentColor(item.department, index);
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        startAngle += sliceAngle;
+      });
+
+      // Donut hole for readability.
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 52, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+
+      legend.innerHTML = data.map((item, index) => {
+        const value = Number(item.salary || 0);
+        const color = getDepartmentColor(item.department, index);
+        const calculatedPercentage = ((value / total) * 100).toFixed(1);
+        return `
+          <div class="legend-item">
+            <div class="legend-left">
+              <span class="legend-dot" style="background:${color}"></span>
+              <span>${item.department}</span>
+            </div>
+            <span> ${formatSalary(value)}(${calculatedPercentage}%) </span>
+      
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadSalaryChart() {
+      try {
+        const res = await fetch('/api/salary-by-department');
+        const data = await res.json();
+        drawPieChart(Array.isArray(data) ? data : []);
+      } catch {
+        drawPieChart([]);
+      }
+    }
+
     function renderTable(employees) {
       const tbody = document.getElementById('tableBody');
       document.getElementById('resultCount').textContent = `${totalRows} result${totalRows !== 1 ? 's' : ''}`;
@@ -701,7 +872,7 @@
       if (employees.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8">
         <div class="empty-state">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg width="48" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
           <p>No employees match your search.</p>
@@ -749,6 +920,7 @@
       prevBtn.disabled = currentPage <= 1;
       nextBtn.disabled = currentPage >= totalPages;
     }
+
     function updateSortHeaders() {
       document.querySelectorAll('thead th').forEach(th => {
         const col = th.dataset.col;
@@ -858,6 +1030,7 @@
     updateSortHeaders();
     loadDepartments();
     loadEmployees();
+    loadSalaryChart();
 
     let editingEmployeeMethod = null;
 
@@ -903,6 +1076,7 @@
         }
         loadEmployees();
         loadDepartments();
+        loadSalaryChart();
         showToast(`Deleted "${name}" (ID: ${id}) successfully.`);
       } catch (err) {
         alert(err.message);
@@ -1051,6 +1225,8 @@
           currentPage = 1;
         }
         await loadEmployees();
+        await loadSalaryChart();
+
         showToast(wasEditing ? 'Employee updated successfully!' : 'Employee added successfully!');
       } catch (err) {
         formError.textContent = err.message;
