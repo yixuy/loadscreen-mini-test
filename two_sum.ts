@@ -107,10 +107,14 @@ function twoSum(nums: number[], target: number): number[] {
 
   for (let i = 0; i < nums.length; i++) {
     const complement = target - nums[i];
+
     if (mapping.has(complement)) {
       return [mapping.get(complement)!, i];
     }
-    mapping.set(nums[i], i);
+
+    if (!mapping.has(nums[i])) {
+      mapping.set(nums[i], i);
+    }
   }
 
   return [];
